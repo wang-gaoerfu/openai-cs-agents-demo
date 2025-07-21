@@ -5,6 +5,7 @@ from typing import Optional, List, Dict, Any
 from uuid import uuid4
 import time
 import logging
+import os
 
 from main import (
     triage_agent,
@@ -13,6 +14,8 @@ from main import (
     flight_status_agent,
     cancellation_agent,
     create_initial_context,
+    on_seat_booking_handoff,
+    on_cancellation_handoff,
 )
 
 from deepseek_agent import (
@@ -24,6 +27,7 @@ from deepseek_agent import (
     ToolCallOutputItem,
     InputGuardrailTripwireTriggered,
     Handoff,
+    RunContextWrapper,
 )
 
 # 配置日志
@@ -220,11 +224,76 @@ async def chat_endpoint(req: ChatRequest):
     messages: List[MessageResponse] = []
     events: List[AgentEvent] = []
 
+    # 检查是否需要转接代理（开发模式下的模拟转接）
+    dev_mode = os.environ.get("DEEPSEEK_DEV_MODE", "").lower() in ("true", "1", "yes")
+    if dev_mode and len(result.new_items) > 0 and isinstance(result.new_items[0], MessageOutputItem):
+        content = result.new_items[0].content
+        # 检查消息中是否包含转接提示
+        if "转接到座位预订代理" in content:
+            # 模拟转接到座位预订代理
+            old_agent = current_agent
+            current_agent = seat_booking_agent
+            # 创建转接事件
+            events.append(
+                AgentEvent(
+                    id=uuid4().hex,
+                    type="handoff",
+                    agent=old_agent.name,
+                    content=f"{old_agent.name} -> {current_agent.name}",
+                    metadata={"source_agent": old_agent.name, "target_agent": current_agent.name},
+                )
+            )
+            # 执行转接回调
+            if old_agent.name == triage_agent.name:
+                await on_seat_booking_handoff(RunContextWrapper(state["context"]))
+        elif "转接到航班状态代理" in content:
+            # 模拟转接到航班状态代理
+            old_agent = current_agent
+            current_agent = flight_status_agent
+            events.append(
+                AgentEvent(
+                    id=uuid4().hex,
+                    type="handoff",
+                    agent=old_agent.name,
+                    content=f"{old_agent.name} -> {current_agent.name}",
+                    metadata={"source_agent": old_agent.name, "target_agent": current_agent.name},
+                )
+            )
+        elif "转接到FAQ代理" in content:
+            # 模拟转接到FAQ代理
+            old_agent = current_agent
+            current_agent = faq_agent
+            events.append(
+                AgentEvent(
+                    id=uuid4().hex,
+                    type="handoff",
+                    agent=old_agent.name,
+                    content=f"{old_agent.name} -> {current_agent.name}",
+                    metadata={"source_agent": old_agent.name, "target_agent": current_agent.name},
+                )
+            )
+        elif "转接到取消代理" in content:
+            # 模拟转接到取消代理
+            old_agent = current_agent
+            current_agent = cancellation_agent
+            events.append(
+                AgentEvent(
+                    id=uuid4().hex,
+                    type="handoff",
+                    agent=old_agent.name,
+                    content=f"{old_agent.name} -> {current_agent.name}",
+                    metadata={"source_agent": old_agent.name, "target_agent": current_agent.name},
+                )
+            )
+            # 执行转接回调
+            if old_agent.name == triage_agent.name:
+                await on_cancellation_handoff(RunContextWrapper(state["context"]))
+
     for item in result.new_items:
         if isinstance(item, MessageOutputItem):
             text = ItemHelpers.text_message_output(item)
-            messages.append(MessageResponse(content=text, agent=item.agent.name))
-            events.append(AgentEvent(id=uuid4().hex, type="message", agent=item.agent.name, content=text))
+            messages.append(MessageResponse(content=text, agent=current_agent.name))
+            events.append(AgentEvent(id=uuid4().hex, type="message", agent=current_agent.name, content=text))
         # 处理转接输出和代理切换
         elif isinstance(item, HandoffOutputItem):
             # 记录转接事件
