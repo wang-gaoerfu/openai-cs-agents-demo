@@ -11,7 +11,7 @@
 
 2. 一个Next.js UI，用于可视化代理编排过程并提供聊天界面。
 
-![演示截图](screenshot.jpg)
+![演示截图](screenshot_cn.png)
 
 ## 框架功能详细总结
 
