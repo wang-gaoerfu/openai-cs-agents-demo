@@ -8,12 +8,12 @@ interface SeatMapProps {
     selectedSeat?: string;
 }
 
-// Define seat layout for a typical narrow-body aircraft
+// 定义典型窄体飞机的座位布局
 const SEAT_LAYOUT = {
     business: { rows: [1, 2, 3, 4], seatsPerRow: ['A', 'B', 'C', 'D'] },
     economyPlus: { rows: [5, 6, 7, 8], seatsPerRow: ['A', 'B', 'C', 'D', 'E', 'F'] },
     economy: {
-        rows: Array.from({ length: 16 }, (_, i) => i + 9), // rows 9-24
+        rows: Array.from({ length: 16 }, (_, i) => i + 9), // 9-24排
         seatsPerRow: ['A', 'B', 'C', 'D', 'E', 'F']
     }
 };
@@ -34,7 +34,7 @@ export function SeatMap({ onSeatSelect, selectedSeat }: SeatMapProps) {
     };
 
     const getSeatColor = (status: string, isExit: boolean) => {
-        // Available = emerald, Occupied = gray, Exit Row = yellow (pastel)
+        // 可用 = 绿色, 已占用 = 灰色, 安全出口排 = 黄色（柔和）
         switch (status) {
             case 'occupied':
                 return 'bg-gray-300 text-gray-500 cursor-not-allowed';
@@ -68,14 +68,14 @@ export function SeatMap({ onSeatSelect, selectedSeat }: SeatMapProps) {
                                             className={`w-8 h-8 text-xs font-medium border rounded ${getSeatColor(status, isExitRow)} transition-colors`}
                                             onClick={() => status === 'available' && onSeatSelect(seatNumber)}
                                             disabled={status === 'occupied'}
-                                            title={`Seat ${seatNumber}${isExitRow ? ' (Exit Row)' : ''}${status === 'occupied' ? ' - Occupied' : ''}`}
+                                            title={`座位 ${seatNumber}${isExitRow ? ' (安全出口排)' : ''}${status === 'occupied' ? ' - 已占用' : ''}`}
                                         >
                                             {letter}
                                         </button>
                                     );
                                 })}
                             </div>
-                            <div className="w-4" /> {/* Aisle */}
+                            <div className="w-4" /> {/* 过道 */}
                             <div className="flex gap-1">
                                 {config.seatsPerRow.slice(Math.ceil(config.seatsPerRow.length / 2)).map(letter => {
                                     const seatNumber = `${row}${letter}`;
@@ -86,7 +86,7 @@ export function SeatMap({ onSeatSelect, selectedSeat }: SeatMapProps) {
                                             className={`w-8 h-8 text-xs font-medium border rounded ${getSeatColor(status, isExitRow)} transition-colors`}
                                             onClick={() => status === 'available' && onSeatSelect(seatNumber)}
                                             disabled={status === 'occupied'}
-                                            title={`Seat ${seatNumber}${isExitRow ? ' (Exit Row)' : ''}${status === 'occupied' ? ' - Occupied' : ''}`}
+                                            title={`座位 ${seatNumber}${isExitRow ? ' (安全出口排)' : ''}${status === 'occupied' ? ' - 已占用' : ''}`}
                                         >
                                             {letter}
                                         </button>
@@ -104,33 +104,33 @@ export function SeatMap({ onSeatSelect, selectedSeat }: SeatMapProps) {
         <Card className="w-full max-w-md mx-auto my-4 bg-blue-50">
             <CardContent className="p-4">
                 <div className="text-center mb-4">
-                    <h3 className="font-semibold text-lg mb-2">Select Your Seat</h3>
+                    <h3 className="font-semibold text-lg mb-2">选择您的座位</h3>
                     <div className="flex justify-center gap-4 text-xs">
                         <div className="flex items-center gap-1">
                             <div className="w-3 h-3 bg-emerald-100 border border-emerald-300 rounded"></div>
-                            <span>Available</span>
+                            <span>可选</span>
                         </div>
                         <div className="flex items-center gap-1">
                             <div className="w-3 h-3 bg-gray-300 rounded"></div>
-                            <span>Occupied</span>
+                            <span>已占用</span>
                         </div>
                         <div className="flex items-center gap-1">
                             <div className="w-3 h-3 bg-yellow-100 border border-yellow-300 rounded"></div>
-                            <span>Exit Row</span>
+                            <span>安全出口排</span>
                         </div>
                     </div>
                 </div>
 
                 <div className="space-y-4">
-                    {renderSeatSection("Business Class", SEAT_LAYOUT.business, "border-b pb-4")}
-                    {renderSeatSection("Economy Plus", SEAT_LAYOUT.economyPlus, "border-b pb-4")}
-                    {renderSeatSection("Economy", SEAT_LAYOUT.economy, "")}
+                    {renderSeatSection("商务舱", SEAT_LAYOUT.business, "border-b pb-4")}
+                    {renderSeatSection("经济舱Plus", SEAT_LAYOUT.economyPlus, "border-b pb-4")}
+                    {renderSeatSection("经济舱", SEAT_LAYOUT.economy, "")}
                 </div>
 
                 {selectedSeat && (
                     <div className="mt-4 p-3 bg-blue-50 rounded-lg text-center">
                         <p className="text-sm font-medium text-blue-800">
-                            Selected: Seat {selectedSeat}
+                            已选择: 座位 {selectedSeat}
                         </p>
                     </div>
                 )}

@@ -8,7 +8,7 @@ import { SeatMap } from "./seat-map";
 interface ChatProps {
   messages: Message[];
   onSendMessage: (message: string) => void;
-  /** Whether waiting for assistant response */
+  /** 是否正在等待助手响应 */
   isLoading?: boolean;
 }
 
@@ -19,17 +19,17 @@ export function Chat({ messages, onSendMessage, isLoading }: ChatProps) {
   const [showSeatMap, setShowSeatMap] = useState(false);
   const [selectedSeat, setSelectedSeat] = useState<string | undefined>(undefined);
 
-  // Auto-scroll to bottom when messages or loading indicator change
+  // 消息或加载指示器更改时自动滚动到底部
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
   }, [messages, isLoading]);
 
-  // Watch for special seat map trigger message (anywhere in list) and only if a seat has not been picked yet
+  // 监视特殊座位图触发消息（在列表中的任何位置），并且仅当尚未选择座位时
   useEffect(() => {
     const hasTrigger = messages.some(
       (m) => m.role === "assistant" && m.content === "DISPLAY_SEAT_MAP"
     );
-    // Show map if trigger exists and seat not chosen yet
+    // 如果存在触发器且尚未选择座位，则显示地图
     if (hasTrigger && !selectedSeat) {
       setShowSeatMap(true);
     }
@@ -45,7 +45,7 @@ export function Chat({ messages, onSendMessage, isLoading }: ChatProps) {
     (seat: string) => {
       setSelectedSeat(seat);
       setShowSeatMap(false);
-      onSendMessage(`I would like seat ${seat}`);
+      onSendMessage(`我想要${seat}座位`);
     },
     [onSendMessage]
   );
@@ -64,13 +64,13 @@ export function Chat({ messages, onSendMessage, isLoading }: ChatProps) {
     <div className="flex flex-col h-full flex-1 bg-white shadow-sm border border-gray-200 border-t-0 rounded-xl">
       <div className="bg-blue-600 text-white h-12 px-4 flex items-center rounded-t-xl">
         <h2 className="font-semibold text-sm sm:text-base lg:text-lg">
-          Customer View
+          客户视图
         </h2>
       </div>
-      {/* Messages */}
+      {/* 消息 */}
       <div className="flex-1 overflow-y-auto min-h-0 md:px-4 pt-4 pb-20">
         {messages.map((msg, idx) => {
-          if (msg.content === "DISPLAY_SEAT_MAP") return null; // Skip rendering marker message
+          if (msg.content === "DISPLAY_SEAT_MAP") return null; // 跳过渲染标记消息
           return (
             <div
               key={idx}
@@ -107,7 +107,7 @@ export function Chat({ messages, onSendMessage, isLoading }: ChatProps) {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input area */}
+      {/* 输入区域 */}
       <div className="p-2 md:px-4">
         <div className="flex items-center">
           <div className="flex w-full items-center pb-4 md:pb-1">
@@ -119,7 +119,7 @@ export function Chat({ messages, onSendMessage, isLoading }: ChatProps) {
                     tabIndex={0}
                     dir="auto"
                     rows={2}
-                    placeholder="Message..."
+                    placeholder="输入消息..."
                     className="mb-2 resize-none border-0 focus:outline-none text-sm bg-transparent px-0 pb-6 pt-2"
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}

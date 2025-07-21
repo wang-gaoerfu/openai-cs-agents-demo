@@ -17,7 +17,15 @@ interface RunnerOutputProps {
 }
 
 function formatEventName(type: string) {
-  return (type.charAt(0).toUpperCase() + type.slice(1)).replace("_", " ");
+  const typeMap: Record<string, string> = {
+    handoff: "转接",
+    tool_call: "工具调用",
+    tool_output: "工具输出",
+    context_update: "上下文更新",
+    message: "消息"
+  };
+  
+  return typeMap[type] || type;
 }
 
 function EventIcon({ type }: { type: string }) {
@@ -45,11 +53,11 @@ function EventDetails({ event }: { event: AgentEvent }) {
       details = event.metadata && (
         <div className={className}>
           <div className="text-gray-600">
-            <span className="text-zinc-600 font-medium">From:</span>{" "}
+            <span className="text-zinc-600 font-medium">从:</span>{" "}
             {event.metadata.source_agent}
           </div>
           <div className="text-gray-600">
-            <span className="text-zinc-600 font-medium">To:</span>{" "}
+            <span className="text-zinc-600 font-medium">到:</span>{" "}
             {event.metadata.target_agent}
           </div>
         </div>
@@ -59,7 +67,7 @@ function EventDetails({ event }: { event: AgentEvent }) {
       details = event.metadata && event.metadata.tool_args && (
         <div className={className}>
           <div className="text-xs text-zinc-600 mb-1 font-medium">
-            Arguments
+            参数
           </div>
           <pre className="text-xs text-gray-600 bg-gray-50 p-2 rounded overflow-x-auto">
             {JSON.stringify(event.metadata.tool_args, null, 2)}
@@ -70,7 +78,7 @@ function EventDetails({ event }: { event: AgentEvent }) {
     case "tool_output":
       details = event.metadata && event.metadata.tool_result && (
         <div className={className}>
-          <div className="text-xs text-zinc-600 mb-1 font-medium">Result</div>
+          <div className="text-xs text-zinc-600 mb-1 font-medium">结果</div>
           <pre className="text-xs text-gray-600 bg-gray-50 p-2 rounded overflow-x-auto">
             {JSON.stringify(event.metadata.tool_result, null, 2)}
           </pre>
@@ -84,7 +92,7 @@ function EventDetails({ event }: { event: AgentEvent }) {
             <div key={key} className="text-xs">
               <div className="text-gray-600">
                 <span className="text-zinc-600 font-medium">{key}:</span>{" "}
-                {value ?? "null"}
+                {value ?? "空"}
               </div>
             </div>
           ))}
@@ -128,12 +136,12 @@ function TimeBadge({ timestamp }: { timestamp: Date }) {
 export function RunnerOutput({ runnerEvents }: RunnerOutputProps) {
   return (
     <div className="flex-1 overflow-hidden">
-      <PanelSection title="Runner Output" icon={<MessageSquareMore className="h-4 w-4 text-blue-600" />}>
+      <PanelSection title="运行输出" icon={<MessageSquareMore className="h-4 w-4 text-blue-600" />}>
         <ScrollArea className="h-[calc(100%-2rem)] rounded-md border border-gray-200 bg-gray-100 shadow-sm">
         <div className="p-4 space-y-3">
           {runnerEvents.length === 0 ? (
             <p className="text-center text-zinc-500 p-4">
-              No runner events yet
+              暂无运行事件
             </p>
           ) : (
             runnerEvents.map((event) => (

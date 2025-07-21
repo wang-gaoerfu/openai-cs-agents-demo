@@ -15,7 +15,7 @@ from main import (
     create_initial_context,
 )
 
-from agents import (
+from deepseek_agent import (
     Runner,
     ItemHelpers,
     MessageOutputItem,
@@ -26,13 +26,13 @@ from agents import (
     Handoff,
 )
 
-# Configure logging
+# 配置日志
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
-# CORS configuration (adjust as needed for deployment)
+# CORS配置（根据部署需要调整）
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
@@ -42,7 +42,7 @@ app.add_middleware(
 )
 
 # =========================
-# Models
+# 模型
 # =========================
 
 class ChatRequest(BaseModel):
@@ -79,7 +79,7 @@ class ChatResponse(BaseModel):
     guardrails: List[GuardrailCheck] = []
 
 # =========================
-# In-memory store for conversation state
+# 会话状态的内存存储
 # =========================
 
 class ConversationStore:
@@ -98,15 +98,15 @@ class InMemoryConversationStore(ConversationStore):
     def save(self, conversation_id: str, state: Dict[str, Any]):
         self._conversations[conversation_id] = state
 
-# TODO: when deploying this app in scale, switch to your own production-ready implementation
+# TODO: 在大规模部署此应用程序时，切换到您自己的生产就绪实现
 conversation_store = InMemoryConversationStore()
 
 # =========================
-# Helpers
+# 辅助函数
 # =========================
 
 def _get_agent_by_name(name: str):
-    """Return the agent object by name."""
+    """通过名称返回代理对象。"""
     agents = {
         triage_agent.name: triage_agent,
         faq_agent.name: faq_agent,
@@ -117,7 +117,7 @@ def _get_agent_by_name(name: str):
     return agents.get(name, triage_agent)
 
 def _get_guardrail_name(g) -> str:
-    """Extract a friendly guardrail name."""
+    """提取友好的守卫名称。"""
     name_attr = getattr(g, "name", None)
     if isinstance(name_attr, str) and name_attr:
         return name_attr
@@ -130,7 +130,7 @@ def _get_guardrail_name(g) -> str:
     return str(g)
 
 def _build_agents_list() -> List[Dict[str, Any]]:
-    """Build a list of all available agents and their metadata."""
+    """构建所有可用代理及其元数据的列表。"""
     def make_agent_dict(agent):
         return {
             "name": agent.name,
@@ -148,16 +148,16 @@ def _build_agents_list() -> List[Dict[str, Any]]:
     ]
 
 # =========================
-# Main Chat Endpoint
+# 主聊天端点
 # =========================
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(req: ChatRequest):
     """
-    Main chat endpoint for agent orchestration.
-    Handles conversation state, agent routing, and guardrail checks.
+    代理编排的主聊天端点。
+    处理会话状态、代理路由和守卫检查。
     """
-    # Initialize or retrieve conversation state
+    # 初始化或检索会话状态
     is_new = not req.conversation_id or conversation_store.get(req.conversation_id) is None
     if is_new:
         conversation_id: str = uuid4().hex
@@ -205,7 +205,7 @@ async def chat_endpoint(req: ChatRequest):
                 passed=(g != failed),
                 timestamp=gr_timestamp,
             ))
-        refusal = "Sorry, I can only answer questions related to airline travel."
+        refusal = "抱歉，我只能回答与航空旅行相关的问题。"
         state["input_items"].append({"role": "assistant", "content": refusal})
         return ChatResponse(
             conversation_id=conversation_id,
@@ -225,9 +225,9 @@ async def chat_endpoint(req: ChatRequest):
             text = ItemHelpers.text_message_output(item)
             messages.append(MessageResponse(content=text, agent=item.agent.name))
             events.append(AgentEvent(id=uuid4().hex, type="message", agent=item.agent.name, content=text))
-        # Handle handoff output and agent switching
+        # 处理转接输出和代理切换
         elif isinstance(item, HandoffOutputItem):
-            # Record the handoff event
+            # 记录转接事件
             events.append(
                 AgentEvent(
                     id=uuid4().hex,
@@ -237,10 +237,10 @@ async def chat_endpoint(req: ChatRequest):
                     metadata={"source_agent": item.source_agent.name, "target_agent": item.target_agent.name},
                 )
             )
-            # If there is an on_handoff callback defined for this handoff, show it as a tool call
+            # 如果为此转接定义了on_handoff回调，则将其显示为工具调用
             from_agent = item.source_agent
             to_agent = item.target_agent
-            # Find the Handoff object on the source agent matching the target
+            # 在源代理上查找与目标匹配的Handoff对象
             ho = next(
                 (h for h in getattr(from_agent, "handoffs", [])
                  if isinstance(h, Handoff) and getattr(h, "agent_name", None) == to_agent.name),
@@ -283,7 +283,7 @@ async def chat_endpoint(req: ChatRequest):
                     metadata={"tool_args": tool_args},
                 )
             )
-            # If the tool is display_seat_map, send a special message so the UI can render the seat selector.
+            # 如果工具是display_seat_map，发送特殊消息以便UI可以渲染座位选择器
             if tool_name == "display_seat_map":
                 messages.append(
                     MessageResponse(
@@ -319,7 +319,7 @@ async def chat_endpoint(req: ChatRequest):
     state["current_agent"] = current_agent.name
     conversation_store.save(conversation_id, state)
 
-    # Build guardrail results: mark failures (if any), and any others as passed
+    # 构建守卫结果：标记失败（如果有），其他标记为通过
     final_guardrails: List[GuardrailCheck] = []
     for g in getattr(current_agent, "input_guardrails", []):
         name = _get_guardrail_name(g)

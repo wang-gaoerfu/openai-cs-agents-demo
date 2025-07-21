@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AgentPanel } from "@/components/agent-panel";
-import { Chat } from "@/components/chat";
+import { Chat } from "@/components/Chat";
 import type { Agent, AgentEvent, GuardrailCheck, Message } from "@/lib/types";
 import { callChatAPI } from "@/lib/api";
 
@@ -14,10 +14,10 @@ export default function Home() {
   const [guardrails, setGuardrails] = useState<GuardrailCheck[]>([]);
   const [context, setContext] = useState<Record<string, any>>({});
   const [conversationId, setConversationId] = useState<string | null>(null);
-  // Loading state while awaiting assistant response
+  // 等待助手响应时的加载状态
   const [isLoading, setIsLoading] = useState(false);
 
-  // Boot the conversation
+  // 启动对话
   useEffect(() => {
     (async () => {
       const data = await callChatAPI("", conversationId ?? "");
@@ -45,7 +45,7 @@ export default function Home() {
     })();
   }, []);
 
-  // Send a user message
+  // 发送用户消息
   const handleSendMessage = async (content: string) => {
     const userMsg: Message = {
       id: Date.now().toString(),
@@ -70,7 +70,7 @@ export default function Home() {
       setEvents((prev) => [...prev, ...stamped]);
     }
     if (data.agents) setAgents(data.agents);
-    // Update guardrails state
+    // 更新守卫状态
     if (data.guardrails) setGuardrails(data.guardrails);
 
     if (data.messages) {
